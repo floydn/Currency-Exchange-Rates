@@ -31,19 +31,22 @@ def get_fx_rates_oanda(rate_date):
 
     Given the date, a post request is sent to oanda.com to query their historical
     daily exchange rates. The response is parsed to extract the exchange rates into
-    a list
+    a list.
 
     Parameters
     ----------
-    rate_date : object
+    rate_date : datetime.date
+        The date of the currency exchange rate
 
     Returns
     -------
     rates : list
-        A list of lists containing currency code, currency name, rate (USD/1 unit) for
-        160+ currencies
+        A list of lists containing currency code, currency name, rate (USD/1 unit) and 
+        rate date for 160+ currencies for the given date
     """
-
+    # date string for http post
+    datehttppost = '{:%m%%2F%d%%2F%y}'.format(dt)
+    
     # header information for post request
     headers = {
         'Origin':                    'http://www.oanda.com',
@@ -59,7 +62,7 @@ def get_fx_rates_oanda(rate_date):
     }
 
     # data for post request. will be used in the query
-    data = 'value=1&date=12%2F15%2F15&date_fmt=us&result=1&lang=en&exch=USD&exch2=&Currency=GBP'
+    data = 'value=1&date=' + datehttppost + '&date_fmt=us&result=1&lang=en&exch=USD&exch2=&Currency=GBP'
     data += '&Currency=JPY&Currency=CHF&Currency=CAD&Currency=AFN&Currency=ALL&Currency=DZD'
     data += '&Currency=ADF&Currency=ADP&Currency=AOA&Currency=AON&Currency=ARS&Currency=AMD'
     data += '&Currency=AWG&Currency=AUD&Currency=ATS&Currency=AZM&Currency=AZN&Currency=BSD'
@@ -94,21 +97,35 @@ def get_fx_rates_oanda(rate_date):
     data += '&Currency=VUV&Currency=VEB&Currency=VEF&Currency=VND&Currency=YER&Currency=YUN'
     data += '&Currency=ZMW&Currency=ZMK&Currency=ZWD&expr2=&format=CSV&dest=Get+Table'
 
-    reqo = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data)
+    # proxy
+    proxies = {
+        'http': 'http://nbd61nc:n1115von@rrwebproxy.bankofamerica.com:8080'
+    }
+    
+    # submit post to oanda.com
+    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data, 
+                        proxies=proxies)
 
-    soup = BeautifulSoup(reqo.text, 'lxml', parse_only=SoupStrainer(id='converter_table'))
+    # from the response extract only the table containing the exchange rates
+    soup = BeautifulSoup(req.text, 'lxml', parse_only=SoupStrainer(id='converter_table'))
+    
+    # within the html table, the rate data are contained in the <pre> tag
     ratetable = soup('pre')
     rates = []
     for row in ratetable:
+        # keep text only, strip all html/xml tags
         txt = str(row.text)
+        # txt variable is one long string of data
+        # split the string into lines then split the lines into individual data elements
         for line in txt.split('\n')[2:]:
             if line != '':
-                rates.append(line.split(',')[0:3])
+                rates.append(line.split(',')[0:3] + [rate_date])
 
     return rates
 
 if __name__ == '__main__':
-
-    with open('D:\\Users\\Floyd\\Documents\\Projects\\CurrencyExchangeRates\\fx_rates2.csv', 'w') as f:
+    dt = date(2015,12,31)
+    rates = get_fx_rates_oanda(dt)
+    with open('fx_rates.csv', 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
         writer.writerows(rates)
