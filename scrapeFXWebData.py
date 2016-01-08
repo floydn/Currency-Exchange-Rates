@@ -103,10 +103,9 @@ def get_fx_rates_oanda(rate_date):
     }
     
     # submit post to oanda.com
-    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data, 
-                        proxies=proxies)
+    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data)#, proxies=proxies)
 
-    # from the response extract only the table containing the exchange rates
+    # from the response, extract only the table containing the exchange rates
     soup = BeautifulSoup(req.text, 'lxml', parse_only=SoupStrainer(id='converter_table'))
     
     # within the html table, the rate data are contained in the <pre> tag
@@ -117,8 +116,10 @@ def get_fx_rates_oanda(rate_date):
         txt = str(row.text)
         # txt variable is one long string of data
         # split the string into lines then split the lines into individual data elements
+        # the slice [2:] excludes the header row and blank line after it
         for line in txt.split('\n')[2:]:
             if line != '':
+                # the slice excludes the 1 unit/USD conversion
                 rates.append(line.split(',')[0:3] + [rate_date])
 
     return rates
