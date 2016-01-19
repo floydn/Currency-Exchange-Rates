@@ -99,11 +99,11 @@ def get_fx_rates_oanda(rate_date):
 
     # proxy
     proxies = {
-        'http': 'http://nbd61nc:n1115von@rrwebproxy.bankofamerica.com:8080'
+        'http': 'http://rrwebproxy.bankofamerica.com:8080'
     }
     
     # submit post to oanda.com
-    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data)#, proxies=proxies)
+    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data, proxies=proxies)
 
     # from the response, extract only the table containing the exchange rates
     soup = BeautifulSoup(req.text, 'lxml', parse_only=SoupStrainer(id='converter_table'))
