@@ -5,10 +5,10 @@ Spyder Editor
 This is a temporary script file.
 """
 
+from datetime import date
+import csv
 import requests
 from bs4 import BeautifulSoup, SoupStrainer
-import csv
-from datetime import date, timedelta
 
 # r = requests.get('http://www.xe.com/currencytables/?from=USD&date=2015-12-15')
 #
@@ -41,12 +41,12 @@ def get_fx_rates_oanda(rate_date):
     Returns
     -------
     rates : list
-        A list of lists containing currency code, currency name, rate (USD/1 unit) and 
+        A list of lists containing currency code, currency name, rate (USD/1 unit) and
         rate date for 160+ currencies for the given date
     """
     # date string for http post
     datehttppost = '{:%m%%2F%d%%2F%y}'.format(dt)
-    
+
     # header information for post request
     headers = {
         'Origin':                    'http://www.oanda.com',
@@ -97,17 +97,17 @@ def get_fx_rates_oanda(rate_date):
     data += '&Currency=VUV&Currency=VEB&Currency=VEF&Currency=VND&Currency=YER&Currency=YUN'
     data += '&Currency=ZMW&Currency=ZMK&Currency=ZWD&expr2=&format=CSV&dest=Get+Table'
 
-    # proxy
+    # proxy, if needed
     proxies = {
-        'http': 'http://rrwebproxy.bankofamerica.com:8080'
     }
-    
+
     # submit post to oanda.com
-    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data, proxies=proxies)
+    req = requests.post('http://www.oanda.com/currency/table', headers=headers, data=data,
+                        proxies=proxies)
 
     # from the response, extract only the table containing the exchange rates
     soup = BeautifulSoup(req.text, 'lxml', parse_only=SoupStrainer(id='converter_table'))
-    
+
     # within the html table, the rate data are contained in the <pre> tag
     ratetable = soup('pre')
     rates = []
@@ -125,8 +125,8 @@ def get_fx_rates_oanda(rate_date):
     return rates
 
 if __name__ == '__main__':
-    dt = date(2015,12,31)
-    rates = get_fx_rates_oanda(dt)
+    dt = date(2015, 12, 31)
+    new_rates = get_fx_rates_oanda(dt)
     with open('fx_rates.csv', 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
-        writer.writerows(rates)
+        writer.writerows(new_rates)
